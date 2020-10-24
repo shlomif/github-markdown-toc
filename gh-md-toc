@@ -239,7 +239,12 @@ gh_toc_grab() {
     # format result line
     #   * $0 - whole string
     #   * last element of each row: "</hN" where N in (1,2,3,...)
-    echo $echoargs "$(awk -v "gh_url=$1" "$awkscript" | sed 'y/+/ /; s/%/\\x/g')"
+    echo $echoargs "$(awk -v "gh_url=$1" '{
+    level = substr($0, length($0), 1)
+    text = substr($0, match($0, /a>.*<\/h/)+2, RLENGTH-5)
+    href = substr($0, match($0, "href=\"[^\"]+?\"")+6, RLENGTH-7)
+    print sprintf("%*s", level*3, " ") "* [" text "](" gh_url  href ")" }' |
+        perl -lpE 's/(\[[^\]]*\]\()(.*?)(\))/my ($pre, $in, $post)=($1, $2, $3) ; $in =~ s{\+}{ }g; $in =~ s{%}{\\x}g; $pre.$in.$post/ems')"
 }
 
 #
